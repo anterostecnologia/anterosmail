@@ -24,6 +24,9 @@ public class EmailManager {
 	private EmailMessage emailMessage;
 	private boolean confirmationReceipt = false;
 	private boolean readingConfirmation = false;
+	private boolean useTLS;
+	private int port;
+	private String host;
 
 	public EmailManager(Properties propriedades,
 			EmailAuthenticator autenticadorEmail) {
@@ -31,28 +34,54 @@ public class EmailManager {
 		this.authenticator = autenticadorEmail;
 	}
 
-	public EmailManager(Properties propriedades,
-			EmailAuthenticator autenticadorEmail,
-			boolean confirmationReceipt, boolean readingConfirmation) {
+	public EmailManager(Properties propriedades, String host, EmailAuthenticator autenticadorEmail, boolean useTLS,
+			int port) {
+		this.properties = propriedades;
+		this.authenticator = autenticadorEmail;
+		this.useTLS = useTLS;
+		this.port = port;
+		this.host = host;
+
+	}
+
+	public EmailManager(Properties propriedades, EmailAuthenticator autenticadorEmail, boolean confirmationReceipt,
+			boolean readingConfirmation) {
 		this.properties = propriedades;
 		this.authenticator = autenticadorEmail;
 		this.confirmationReceipt = confirmationReceipt;
 		this.readingConfirmation = readingConfirmation;
 	}
 
-	public void send(EmailMessage emailMessage) throws NoSuchProviderException,
-			MessagingException {
+	public void send(EmailMessage emailMessage) throws NoSuchProviderException, MessagingException {
 		this.emailMessage = emailMessage;
 
+		if (useTLS) {
+			if (properties == null)
+				properties = new Properties();
+			properties.setProperty("mail.smtp.host", host);
+			properties.setProperty("mail.imap.ssl.enable", "true");
+			properties.setProperty("mail.imap.ssl.socketFactory.class", "br.com.anteros.mail.AnterosSSLSocketFactory");
+			properties.setProperty("mail.imap.ssl.socketFactory.fallback", "false");
+			properties.setProperty("mail.smtp.port", "" + port);
+			properties.setProperty("mail.smtp.auth", "true");
+			properties.setProperty("mail.smtp.socketFactory.port", ""+port);
+			properties.setProperty("mail.smtp.EnableSSL.enable", "true");
+			properties.setProperty("mail.debug", "true");
+			properties.setProperty("mail.smtp.starttls.required", "true");
+			properties.setProperty("mail.smtp.ssl.trust", host);
+
+		}
+
 		Session session = Session.getInstance(properties, authenticator);
+		
 
 		MimeMessage message = new MimeMessage(session);
 		message.setFrom(new InternetAddress(this.getEmailMessage().getEmailFrom()));
+		
 		InternetAddress[] to = this.emailMessage.getEmailTO();
 		InternetAddress[] cc = this.emailMessage.getEmailCC();
 		if (readingConfirmation)
-			message.addHeader("Disposition-Notification-To",
-					this.emailMessage.getEmailFrom());
+			message.addHeader("Disposition-Notification-To", this.emailMessage.getEmailFrom());
 		if (confirmationReceipt)
 			message.addHeader("Return-Receipt-To", this.emailMessage.getEmailFrom());
 
@@ -76,13 +105,13 @@ public class EmailManager {
 			for (EmailAttachment anexo : this.emailMessage.getAttachments()) {
 				headers.addHeader("Content-Type", anexo.getContentType());
 				MimeBodyPart attach = new MimeBodyPart();
-				attach.setDataHandler(new DataHandler(new ByteArrayDataSource(
-						anexo.getContent(), anexo.getContentType())));
+				attach.setDataHandler(
+						new DataHandler(new ByteArrayDataSource(anexo.getContent(), anexo.getContentType())));
 				attach.setFileName(anexo.getName());
 				body.addBodyPart(attach);
 			}
 		}
-		
+
 		message.setContent(body);
 
 		Transport.send(message);
@@ -110,8 +139,6 @@ public class EmailManager {
 	public void setProperties(Properties properties) {
 		this.properties = properties;
 	}
-
-	
 
 	public boolean isConfirmationReceipt() {
 		return confirmationReceipt;
