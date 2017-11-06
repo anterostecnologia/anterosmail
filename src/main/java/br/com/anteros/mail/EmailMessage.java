@@ -7,6 +7,7 @@ import javax.mail.internet.InternetAddress;
 
 public class EmailMessage {
 	private String emailTo;
+	private String name;
 	private String emailFrom;
 	private String subject;
 	private String textMessage;
@@ -87,6 +88,14 @@ public class EmailMessage {
 
 	public void setAttachments(ArrayList<EmailAttachment> attachments) {
 		this.attachments = attachments;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 }

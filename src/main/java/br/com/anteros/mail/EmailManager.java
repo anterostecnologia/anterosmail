@@ -1,5 +1,6 @@
 package br.com.anteros.mail;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.Properties;
 
@@ -28,8 +29,7 @@ public class EmailManager {
 	private int port;
 	private String host;
 
-	public EmailManager(Properties propriedades,
-			EmailAuthenticator autenticadorEmail) {
+	public EmailManager(Properties propriedades, EmailAuthenticator autenticadorEmail) {
 		this.properties = propriedades;
 		this.authenticator = autenticadorEmail;
 	}
@@ -52,7 +52,8 @@ public class EmailManager {
 		this.readingConfirmation = readingConfirmation;
 	}
 
-	public void send(EmailMessage emailMessage) throws NoSuchProviderException, MessagingException {
+	public void send(EmailMessage emailMessage)
+			throws NoSuchProviderException, MessagingException, UnsupportedEncodingException {
 		this.emailMessage = emailMessage;
 
 		if (useTLS) {
@@ -64,7 +65,7 @@ public class EmailManager {
 			properties.setProperty("mail.imap.ssl.socketFactory.fallback", "false");
 			properties.setProperty("mail.smtp.port", "" + port);
 			properties.setProperty("mail.smtp.auth", "true");
-			properties.setProperty("mail.smtp.socketFactory.port", ""+port);
+			properties.setProperty("mail.smtp.socketFactory.port", "" + port);
 			properties.setProperty("mail.smtp.EnableSSL.enable", "true");
 			properties.setProperty("mail.debug", "true");
 			properties.setProperty("mail.smtp.starttls.required", "true");
@@ -73,11 +74,15 @@ public class EmailManager {
 		}
 
 		Session session = Session.getInstance(properties, authenticator);
-		
 
 		MimeMessage message = new MimeMessage(session);
-		message.setFrom(new InternetAddress(this.getEmailMessage().getEmailFrom()));
-		
+		if (this.getEmailMessage().getName() != null) {
+			message.setFrom(
+					new InternetAddress(this.getEmailMessage().getEmailFrom(), this.getEmailMessage().getName()));
+		} else {
+			message.setFrom(new InternetAddress(this.getEmailMessage().getEmailFrom()));
+		}
+
 		InternetAddress[] to = this.emailMessage.getEmailTO();
 		InternetAddress[] cc = this.emailMessage.getEmailCC();
 		if (readingConfirmation)
