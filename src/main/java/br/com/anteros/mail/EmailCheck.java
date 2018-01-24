@@ -18,7 +18,7 @@ import javax.naming.directory.InitialDirContext;
 
 public class EmailCheck {
 	
-	
+	private static final int TIMEOUT_SOCKET = 30000;
 
 	private static int hear(BufferedReader in) throws IOException {
 		String line = null;
@@ -101,6 +101,7 @@ public class EmailCheck {
 			try {
 				int res;
 				Socket skt = new Socket((String) mxList.get(mx), 25);
+				skt.setSoTimeout(TIMEOUT_SOCKET);
 				BufferedReader rdr = new BufferedReader(new InputStreamReader(skt.getInputStream()));
 				BufferedWriter wtr = new BufferedWriter(new OutputStreamWriter(skt.getOutputStream()));
 				res = hear(rdr);
