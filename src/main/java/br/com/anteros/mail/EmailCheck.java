@@ -17,10 +17,10 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
 public class EmailCheck {
-	
+
 	private static final int TIMEOUT_SOCKET = 30000;
 
-	private static int hear(BufferedReader in) throws IOException {
+	private static int hear(BufferedReader in) throws Exception {
 		String line = null;
 		int res = 0;
 		while ((line = in.readLine()) != null) {
@@ -28,7 +28,7 @@ public class EmailCheck {
 			try {
 				res = Integer.parseInt(pfx);
 			} catch (Exception ex) {
-				res = -1;
+				throw new Exception(ex.getMessage());				
 			}
 			if (line.charAt(3) != '-')
 				break;
@@ -73,7 +73,7 @@ public class EmailCheck {
 		return res;
 	}
 
-	public static boolean isAddressValid(String address) {
+	public static boolean isAddressValid(String address, String addressSender) throws Exception {
 		// Find the separator for the domain name
 		int pos = address.indexOf('@');
 		// If the address does not contain an '@', it's not valid
@@ -112,7 +112,7 @@ public class EmailCheck {
 				if (res != 250)
 					throw new Exception("Not ESMTP");
 				// validate the sender address
-				say(wtr, "MAIL FROM: <tim@orbaker.com>");
+				say(wtr, "MAIL FROM: <" + addressSender + ">");
 				res = hear(rdr);
 				if (res != 250)
 					throw new Exception("Sender rejected");
@@ -123,14 +123,19 @@ public class EmailCheck {
 				hear(rdr);
 				say(wtr, "QUIT");
 				hear(rdr);
-				if (res != 250)
-					throw new Exception("Address is not valid!");
-				valid = true;
+				
+				if (res == 550) {
+					valid = false;	
+				} else if (res != 250) {
+					throw new Exception(res + " - Error sending email! ");
+				} else if (res == 250){
+					valid = true;
+				}
 				rdr.close();
 				wtr.close();
 				skt.close();
 			} catch (Exception ex) {
-
+				throw new Exception(ex.getMessage());
 			} finally {
 				if (valid)
 					return true;
@@ -139,11 +144,11 @@ public class EmailCheck {
 		return false;
 	}
 
-	public String call_this_to_validate(String email) {
+	public String call_this_to_validate(String email, String emailSender) throws Exception {
 		String testData[] = { email };
 		String return_string = "";
 		for (int ctr = 0; ctr < testData.length; ctr++) {
-			return_string = (testData[ctr] + " is valid? " + isAddressValid(testData[ctr]));
+			return_string = (testData[ctr] + " is valid? " + isAddressValid(testData[ctr], emailSender));
 		}
 		return return_string;
 	}
