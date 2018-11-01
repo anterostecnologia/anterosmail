@@ -76,38 +76,44 @@ public class EmailCheck {
 	public static boolean isAddressValid(String address, String addressSender) throws Exception {
 		// Find the separator for the domain name
 		int pos = address.indexOf('@');
+		int posSender = addressSender.indexOf('@');
+		
 		// If the address does not contain an '@', it's not valid
-		if (pos == -1)
+		if ((pos == -1) || (posSender == -1))
 			return false;
+		
 		// Isolate the domain/machine name and get a list of mail exchangers
 		String domain = address.substring(++pos);
+		String domainSender = addressSender.substring(++posSender);
+				
 		ArrayList mxList = null;
 		try {
 			mxList = getMX(domain);
 		} catch (NamingException ex) {
 			return false;
 		}
-		// Just because we can send mail to the domain, doesn't mean that the
-		// address is valid, but if we can't, it's a sure sign that it isn't
+		
+		// Just because we can send mail to the domain, doesn't mean that the address is valid, but if we can't, it's a sure sign that it isn't
 		if (mxList.size() == 0)
 			return false;
-		// Now, do the SMTP validation, try each mail exchanger until we get
-		// a positive acceptance. It *MAY* be possible for one MX to allow
-		// a message [store and forwarder for example] and another [like
-		// the actual mail server] to reject it. This is why we REALLY ought
+				
+		// Now, do the SMTP validation, try each mail exchanger until we get a positive acceptance. It *MAY* be possible for one MX to allow
+		// a message [store and forwarder for example] and another [like the actual mail server] to reject it. This is why we REALLY ought
 		// to take the preference into account.
 		for (int mx = 0; mx < mxList.size(); mx++) {
 			boolean valid = false;
+			Socket skt = null;
+			
 			try {
 				int res;
-				Socket skt = new Socket((String) mxList.get(mx), 25);
+				skt = new Socket((String) mxList.get(mx), 25);
 				skt.setSoTimeout(TIMEOUT_SOCKET);
 				BufferedReader rdr = new BufferedReader(new InputStreamReader(skt.getInputStream()));
 				BufferedWriter wtr = new BufferedWriter(new OutputStreamWriter(skt.getOutputStream()));
 				res = hear(rdr);
 				if (res != 220)
 					throw new Exception("Invalid header");
-				say(wtr, "EHLO orbaker.com");
+				say(wtr, "EHLO " + domainSender);
 				res = hear(rdr);
 				if (res != 250)
 					throw new Exception("Not ESMTP");
@@ -135,6 +141,7 @@ public class EmailCheck {
 				wtr.close();
 				skt.close();
 			} catch (Exception ex) {
+				skt.close();
 				throw new Exception(ex.getMessage());
 			} finally {
 				if (valid)
