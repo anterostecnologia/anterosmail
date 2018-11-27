@@ -101,12 +101,10 @@ public class EmailCheck {
 		// a message [store and forwarder for example] and another [like the actual mail server] to reject it. This is why we REALLY ought
 		// to take the preference into account.
 		for (int mx = 0; mx < mxList.size(); mx++) {
-			boolean valid = false;
-			Socket skt = null;
-			
+			boolean valid = false;			
 			try {
 				int res;
-				skt = new Socket((String) mxList.get(mx), 25);
+				Socket skt = new Socket((String) mxList.get(mx), 25);
 				skt.setSoTimeout(TIMEOUT_SOCKET);
 				BufferedReader rdr = new BufferedReader(new InputStreamReader(skt.getInputStream()));
 				BufferedWriter wtr = new BufferedWriter(new OutputStreamWriter(skt.getOutputStream()));
@@ -141,7 +139,6 @@ public class EmailCheck {
 				wtr.close();
 				skt.close();
 			} catch (Exception ex) {
-				skt.close();
 				throw new Exception(ex.getMessage());
 			} finally {
 				if (valid)
