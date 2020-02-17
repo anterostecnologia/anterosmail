@@ -104,17 +104,23 @@ public class EmailCheck {
 				BufferedReader rdr = new BufferedReader(new InputStreamReader(skt.getInputStream()));
 				BufferedWriter wtr = new BufferedWriter(new OutputStreamWriter(skt.getOutputStream()));
 				res = hear(rdr);
-				if (res != 220)
+				if (res != 220) {
+					skt.close();
 					throw new Exception("Invalid header");
+				}
 				say(wtr, "EHLO orbaker.com");
 				res = hear(rdr);
-				if (res != 250)
+				if (res != 250) {
+					skt.close();
 					throw new Exception("Not ESMTP");
+				}
 				// validate the sender address
 				say(wtr, "MAIL FROM: <tim@orbaker.com>");
 				res = hear(rdr);
-				if (res != 250)
+				if (res != 250) {
+					skt.close();
 					throw new Exception("Sender rejected");
+				}
 				say(wtr, "RCPT TO: <" + address + ">");
 				res = hear(rdr);
 				// be polite
@@ -122,8 +128,10 @@ public class EmailCheck {
 				hear(rdr);
 				say(wtr, "QUIT");
 				hear(rdr);
-				if (res != 250)
+				if (res != 250) {
+					skt.close();
 					throw new Exception("Address is not valid!");
+				}
 				valid = true;
 				rdr.close();
 				wtr.close();
