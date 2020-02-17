@@ -17,10 +17,10 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
 public class EmailCheck {
-	
-	
 
-	private static int hear(BufferedReader in) throws IOException {
+	private static final int TIMEOUT_SOCKET = 30000;
+
+	private static int hear(BufferedReader in) throws Exception {
 		String line = null;
 		int res = 0;
 		while ((line = in.readLine()) != null) {
@@ -28,7 +28,7 @@ public class EmailCheck {
 			try {
 				res = Integer.parseInt(pfx);
 			} catch (Exception ex) {
-				res = -1;
+				throw new Exception(ex.getMessage());				
 			}
 			if (line.charAt(3) != '-')
 				break;
@@ -73,34 +73,39 @@ public class EmailCheck {
 		return res;
 	}
 
-	public static boolean isAddressValid(String address) {
+	public static boolean isAddressValid(String address, String addressSender) throws Exception {
 		// Find the separator for the domain name
 		int pos = address.indexOf('@');
+		int posSender = addressSender.indexOf('@');
+		
 		// If the address does not contain an '@', it's not valid
-		if (pos == -1)
+		if ((pos == -1) || (posSender == -1))
 			return false;
+		
 		// Isolate the domain/machine name and get a list of mail exchangers
 		String domain = address.substring(++pos);
+		String domainSender = addressSender.substring(++posSender);
+				
 		ArrayList mxList = null;
 		try {
 			mxList = getMX(domain);
 		} catch (NamingException ex) {
 			return false;
 		}
-		// Just because we can send mail to the domain, doesn't mean that the
-		// address is valid, but if we can't, it's a sure sign that it isn't
+		
+		// Just because we can send mail to the domain, doesn't mean that the address is valid, but if we can't, it's a sure sign that it isn't
 		if (mxList.size() == 0)
 			return false;
-		// Now, do the SMTP validation, try each mail exchanger until we get
-		// a positive acceptance. It *MAY* be possible for one MX to allow
-		// a message [store and forwarder for example] and another [like
-		// the actual mail server] to reject it. This is why we REALLY ought
+				
+		// Now, do the SMTP validation, try each mail exchanger until we get a positive acceptance. It *MAY* be possible for one MX to allow
+		// a message [store and forwarder for example] and another [like the actual mail server] to reject it. This is why we REALLY ought
 		// to take the preference into account.
 		for (int mx = 0; mx < mxList.size(); mx++) {
-			boolean valid = false;
+			boolean valid = false;			
 			try {
 				int res;
 				Socket skt = new Socket((String) mxList.get(mx), 25);
+				skt.setSoTimeout(TIMEOUT_SOCKET);
 				BufferedReader rdr = new BufferedReader(new InputStreamReader(skt.getInputStream()));
 				BufferedWriter wtr = new BufferedWriter(new OutputStreamWriter(skt.getOutputStream()));
 				res = hear(rdr);
@@ -108,14 +113,14 @@ public class EmailCheck {
 					skt.close();
 					throw new Exception("Invalid header");
 				}
-				say(wtr, "EHLO orbaker.com");
+				say(wtr, "EHLO " + domainSender);
 				res = hear(rdr);
 				if (res != 250) {
 					skt.close();
 					throw new Exception("Not ESMTP");
 				}
 				// validate the sender address
-				say(wtr, "MAIL FROM: <tim@orbaker.com>");
+				say(wtr, "MAIL FROM: <" + addressSender + ">");
 				res = hear(rdr);
 				if (res != 250) {
 					skt.close();
@@ -133,11 +138,22 @@ public class EmailCheck {
 					throw new Exception("Address is not valid!");
 				}
 				valid = true;
+				
+				if (res == 550) {
+					valid = false;	
+				} else if (res != 250) {
+					if (skt != null) {
+						skt.close();
+					}
+					throw new Exception(res + " - Error sending email! ");
+				} else if (res == 250){
+					valid = true;
+				}
 				rdr.close();
 				wtr.close();
 				skt.close();
 			} catch (Exception ex) {
-
+				throw new Exception(ex.getMessage());
 			} finally {
 				if (valid)
 					return true;
@@ -146,11 +162,11 @@ public class EmailCheck {
 		return false;
 	}
 
-	public String call_this_to_validate(String email) {
+	public String call_this_to_validate(String email, String emailSender) throws Exception {
 		String testData[] = { email };
 		String return_string = "";
 		for (int ctr = 0; ctr < testData.length; ctr++) {
-			return_string = (testData[ctr] + " is valid? " + isAddressValid(testData[ctr]));
+			return_string = (testData[ctr] + " is valid? " + isAddressValid(testData[ctr], emailSender));
 		}
 		return return_string;
 	}
