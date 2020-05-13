@@ -5,7 +5,7 @@ import javax.mail.PasswordAuthentication;
 
 public class EmailAuthenticator extends Authenticator
 {
-
+ 
     public EmailAuthenticator(String user, String password)
     {
         authentication = new PasswordAuthentication(user, password);

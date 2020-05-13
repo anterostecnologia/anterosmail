@@ -71,6 +71,13 @@ public class EmailManager {
 			properties.setProperty("mail.smtp.starttls.required", "true");
 			properties.setProperty("mail.smtp.ssl.trust", host);
 
+		} else {
+			if (properties == null)
+				properties = new Properties();
+			properties.setProperty("mail.smtp.host", host);
+			properties.setProperty("mail.smtp.port", "" + port);
+			properties.setProperty("mail.smtp.auth", "true");
+			properties.setProperty("mail.debug", debug == true ? "true" : "false");
 		}
 
 		Session session = Session.getInstance(properties, authenticator);
