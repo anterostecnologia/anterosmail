@@ -35,7 +35,8 @@ public class EmailManager {
 		this.authenticator = autenticadorEmail;
 	}
 
-	public EmailManager(Properties propriedades, String host, EmailAuthenticator autenticadorEmail, boolean useTLS, int port, boolean debug) {
+	public EmailManager(Properties propriedades, String host, EmailAuthenticator autenticadorEmail, boolean useTLS,
+			int port, boolean debug) {
 		this.properties = propriedades;
 		this.authenticator = autenticadorEmail;
 		this.useTLS = useTLS;
@@ -56,28 +57,45 @@ public class EmailManager {
 			throws NoSuchProviderException, MessagingException, UnsupportedEncodingException {
 		this.emailMessage = emailMessage;
 
-		if (useTLS) {
-			if (properties == null)
-				properties = new Properties();
-			properties.setProperty("mail.smtp.host", host);
-			properties.setProperty("mail.imap.ssl.enable", "true");
-			properties.setProperty("mail.imap.ssl.socketFactory.class", "br.com.anteros.mail.AnterosSSLSocketFactory");
-			properties.setProperty("mail.imap.ssl.socketFactory.fallback", "false");
-			properties.setProperty("mail.smtp.port", "" + port);
-			properties.setProperty("mail.smtp.auth", "true");
-			properties.setProperty("mail.smtp.socketFactory.port", "" + port);
-			properties.setProperty("mail.smtp.EnableSSL.enable", "true");
+		if (host.contains("gmail")) {
+			properties.put("mail.smtp.host", "smtp.gmail.com");
+			properties.put("mail.smtp.socketFactory.port", "465");
+			properties.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+			properties.put("mail.smtp.auth", "true");
+			properties.put("mail.smtp.port", "465");
 			properties.setProperty("mail.debug", debug == true ? "true" : "false");
-			properties.setProperty("mail.smtp.starttls.required", "true");
-			properties.setProperty("mail.smtp.ssl.trust", host);
+		} else if (host.contains("amazon")) {
+			properties.put("mail.transport.protocol", "smtp");
+			properties.put("mail.smtp.host", host);
+			properties.put("mail.smtp.port", 587); 
+			properties.put("mail.smtp.starttls.enable", "true");
+			properties.put("mail.smtp.auth", "true");
+			properties.setProperty("mail.debug", debug == true ? "true" : "false");
+		} else { 
+			if (useTLS) {
+				if (properties == null)
+					properties = new Properties();
+				properties.setProperty("mail.smtp.host", host);
+				properties.setProperty("mail.imap.ssl.enable", "true");
+				properties.setProperty("mail.imap.ssl.socketFactory.class",
+						"br.com.anteros.mail.AnterosSSLSocketFactory");
+				properties.setProperty("mail.imap.ssl.socketFactory.fallback", "false");
+				properties.setProperty("mail.smtp.port", "" + port);
+				properties.setProperty("mail.smtp.auth", "true");
+				properties.setProperty("mail.smtp.socketFactory.port", "" + port);
+				properties.setProperty("mail.smtp.EnableSSL.enable", "true");
+				properties.setProperty("mail.debug", debug == true ? "true" : "false");
+				properties.setProperty("mail.smtp.starttls.required", "true");
+				properties.setProperty("mail.smtp.ssl.trust", host);
 
-		} else {
-			if (properties == null)
-				properties = new Properties();
-			properties.setProperty("mail.smtp.host", host);
-			properties.setProperty("mail.smtp.port", "" + port);
-			properties.setProperty("mail.smtp.auth", "true");
-			properties.setProperty("mail.debug", debug == true ? "true" : "false");
+			} else {
+				if (properties == null)
+					properties = new Properties();
+				properties.setProperty("mail.smtp.host", host);
+				properties.setProperty("mail.smtp.port", "" + port);
+				properties.setProperty("mail.smtp.auth", "true");
+				properties.setProperty("mail.debug", debug == true ? "true" : "false");
+			}
 		}
 
 		Session session = Session.getInstance(properties, authenticator);
