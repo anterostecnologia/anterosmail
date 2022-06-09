@@ -26,6 +26,7 @@ public class EmailManager {
 	private boolean confirmationReceipt = false;
 	private boolean readingConfirmation = false;
 	private boolean useTLS;
+	private boolean useSSL;
 	private boolean debug;
 	private int port;
 	private String host;
@@ -36,9 +37,10 @@ public class EmailManager {
 	}
 
 	public EmailManager(Properties propriedades, String host, EmailAuthenticator autenticadorEmail, boolean useTLS,
-			int port, boolean debug) {
+			boolean useSSL, int port, boolean debug) {
 		this.properties = propriedades;
 		this.authenticator = autenticadorEmail;
+		this.useSSL = useSSL;
 		this.useTLS = useTLS;
 		this.port = port;
 		this.host = host;
@@ -87,7 +89,15 @@ public class EmailManager {
 				properties.setProperty("mail.debug", debug == true ? "true" : "false");
 				properties.setProperty("mail.smtp.starttls.required", "true");
 				properties.setProperty("mail.smtp.ssl.trust", host);
-
+			} else if (useSSL) {
+				if (properties == null)
+					properties = new Properties();
+				properties.setProperty("mail.smtp.host", host);
+				properties.setProperty("mail.smtp.port", "" + port);
+				properties.setProperty("mail.smtp.auth", "true");
+				properties.setProperty("mail.debug", debug == true ? "true" : "false");
+				properties.setProperty("mail.smtp.socketFactory.port", "" + port);
+				properties.setProperty("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
 			} else {
 				if (properties == null)
 					properties = new Properties();
