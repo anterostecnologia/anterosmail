@@ -90,13 +90,22 @@
 
 	<profiles>
 		<profile>
+			<id>doclint-java8-disable</id>
+			<activation>
+				<jdk>[1.8,)</jdk>
+			</activation>
+			<properties>
+				<doclint>none</doclint>
+			</properties>
+		</profile>
+		<profile>
 			<id>maven-central</id>
 			<build>
 				<plugins>
 					<plugin>
 						<groupId>org.sonatype.plugins</groupId>
 						<artifactId>nexus-staging-maven-plugin</artifactId>
-						<version>1.6.3</version>
+						<version>1.6.13</version>
 						<extensions>true</extensions>
 						<configuration>
 							<serverId>nexus-releases</serverId>
@@ -117,17 +126,6 @@
 							</execution>
 						</executions>
 					</plugin>
-					<plugin>
-						<groupId>org.sonatype.plugins</groupId>
-						<artifactId>nexus-staging-maven-plugin</artifactId>
-						<version>1.6.3</version>
-						<extensions>true</extensions>
-						<configuration>
-							<serverId>nexus-releases</serverId>
-							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-							<autoReleaseAfterClose>true</autoReleaseAfterClose>
-						</configuration>
-					</plugin>
 				</plugins>
 				<pluginManagement>
 					<plugins>
@@ -143,6 +141,7 @@
 						<plugin>
 							<groupId>org.apache.maven.plugins</groupId>
 							<artifactId>maven-source-plugin</artifactId>
+							<version>3.2.1</version>
 							<executions>
 								<execution>
 									<id>attach-sources</id>
@@ -155,18 +154,15 @@
 						<plugin>
 							<groupId>org.apache.maven.plugins</groupId>
 							<artifactId>maven-javadoc-plugin</artifactId>
+							<version>3.4.1</version>
 							<executions>
 								<execution>
 									<id>attach-javadocs</id>
 									<goals>
 										<goal>jar</goal>
 									</goals>
-
 								</execution>
 							</executions>
-							<configuration>
-								<additionalparam>-Xdoclint:none</additionalparam>
-							</configuration>
 						</plugin>
 					</plugins>
 				</pluginManagement>
@@ -179,85 +175,6 @@
 					<url>http://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 				</repository>
 			</distributionManagement>
-
-			<repositories>
-				<repository>
-					<id>bintray</id>
-					<url>http://dl.bintray.com/${bintray.subject}/${bintray.repo}</url>
-					<releases>
-						<enabled>true</enabled>
-					</releases>
-					<snapshots>
-						<enabled>false</enabled>
-					</snapshots>
-				</repository>
-			</repositories>
-		</profile>
-		<profile>
-			<id>bintray</id>
-			<build>
-				<pluginManagement>
-					<plugins>
-						<plugin>
-							<groupId>org.apache.maven.plugins</groupId>
-							<artifactId>maven-compiler-plugin</artifactId>
-							<version>3.1</version>
-							<configuration>
-								<target>${java.versao}</target>
-								<source>${java.versao}</source>
-							</configuration>
-						</plugin>
-						<plugin>
-							<groupId>org.apache.maven.plugins</groupId>
-							<artifactId>maven-source-plugin</artifactId>
-							<executions>
-								<execution>
-									<id>attach-sources</id>
-									<goals>
-										<goal>jar</goal>
-									</goals>
-								</execution>
-							</executions>
-						</plugin>
-						<plugin>
-							<groupId>org.apache.maven.plugins</groupId>
-							<artifactId>maven-javadoc-plugin</artifactId>
-							<executions>
-								<execution>
-									<id>attach-javadocs</id>
-									<goals>
-										<goal>jar</goal>
-									</goals>
-
-								</execution>
-							</executions>
-							<configuration>
-								<additionalparam>-Xdoclint:none</additionalparam>
-							</configuration>
-						</plugin>
-					</plugins>
-				</pluginManagement>
-			</build>
-
-			<distributionManagement>
-				<repository>
-					<id>bintray-REPO-deploy</id>
-					<url>https://api.bintray.com/maven/${bintray.subject}/${bintray.repo}/${bintray.package}/;publish=1;override=1</url>
-				</repository>
-			</distributionManagement>
-
-			<repositories>
-				<repository>
-					<id>bintray</id>
-					<url>http://dl.bintray.com/${bintray.subject}/${bintray.repo}</url>
-					<releases>
-						<enabled>true</enabled>
-					</releases>
-					<snapshots>
-						<enabled>false</enabled>
-					</snapshots>
-				</repository>
-			</repositories>
 		</profile>
 
 		<profile>
@@ -268,7 +185,6 @@
 						<plugin>
 							<groupId>org.apache.maven.plugins</groupId>
 							<artifactId>maven-compiler-plugin</artifactId>
-							<version>3.1</version>
 							<configuration>
 								<target>${java.versao}</target>
 								<source>${java.versao}</source>
@@ -295,16 +211,21 @@
 									<goals>
 										<goal>jar</goal>
 									</goals>
-
 								</execution>
 							</executions>
-							<configuration>
-								<additionalparam>-Xdoclint:none</additionalparam>
-							</configuration>
 						</plugin>
 					</plugins>
 				</pluginManagement>
 			</build>
 		</profile>
 	</profiles>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>joda-time</groupId>
+				<artifactId>joda-time</artifactId>
+				<version>2.3</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 </project>
